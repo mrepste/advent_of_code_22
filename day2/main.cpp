@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-enum class Selection : std::size_t { ROCK = 1, PAPER = 2, SCISSORS = 3 };
-enum class Outcome : std::size_t { WIN = 6, DRAW = 3, LOSS = 0 };
+enum class Selection : std::int64_t { ROCK = 0, PAPER = 1, SCISSORS = 2 };
+enum class Outcome : std::int64_t { WIN = 6, DRAW = 3, LOSS = 0 };
 
 template <typename EnumType> auto as_integer(EnumType val) -> typename std::underlying_type<EnumType>::type
 {
@@ -25,40 +25,30 @@ static std::map<char, Outcome> outcome_map = {
 
 static Outcome rps(Selection player, Selection opponent)
 {
-    if (player == opponent)
-        return Outcome::DRAW;
-    else if ((player == Selection::ROCK && opponent == Selection::SCISSORS) ||
-             (player == Selection::PAPER && opponent == Selection::ROCK) ||
-             (player == Selection::SCISSORS && opponent == Selection::PAPER))
-        return Outcome::WIN;
-    return Outcome::LOSS;
+    return player == opponent ? Outcome::DRAW
+                              : ((opponent == Selection((as_integer(player) + 1) % 3)) ? Outcome::LOSS : Outcome::WIN);
 }
 
 static Selection get_required_move(Selection opponent, Outcome desired_outcome)
 {
-    if (desired_outcome == Outcome::DRAW)
-        return opponent;
-    else if (desired_outcome == Outcome::LOSS)
-        return opponent == Selection::ROCK ? Selection::SCISSORS
-                                           : (opponent == Selection::PAPER ? Selection::ROCK : Selection::PAPER);
-    else
-        return opponent == Selection::ROCK ? Selection::PAPER
-                                           : (opponent == Selection::PAPER ? Selection::SCISSORS : Selection::ROCK);
+    std::int64_t adjustment = desired_outcome == Outcome::WIN ? 1 : (desired_outcome == Outcome::DRAW ? 0 : -1);
+    auto required_move = as_integer(opponent) + adjustment;
+    return Selection((required_move + (required_move < 0 ? 3 : 0)) % 3);
 }
 
 struct Match {
     Match(const std::string &match_details) : first_input(match_details[0]), second_input(match_details[2]) {}
 
-    std::size_t get_phase1_score() const
+    std::int64_t get_phase1_score() const
     {
-        return as_integer(selection_map[second_input]) +
+        return as_integer(selection_map[second_input]) + 1 +
                as_integer(rps(selection_map[second_input], selection_map[first_input]));
     }
 
-    std::size_t get_phase2_score() const
+    std::int64_t get_phase2_score() const
     {
         auto our_move = get_required_move(selection_map[first_input], outcome_map[second_input]);
-        return as_integer(outcome_map[second_input]) + as_integer(our_move);
+        return as_integer(outcome_map[second_input]) + as_integer(our_move) + 1;
     }
 
   protected:
@@ -79,14 +69,13 @@ int main(int argc, char *argv[])
         matches.emplace_back(line);
     }
 
-    std::size_t phase1_total_score = 0;
-    std::size_t phase2_total_score = 0;
+    std::int64_t phase1_total_score = 0;
+    std::int64_t phase2_total_score = 0;
     for (const auto &match : matches) {
         phase1_total_score += match.get_phase1_score();
         phase2_total_score += match.get_phase2_score();
     }
 
-    std::cout << "Total Matches: " << matches.size() << std::endl;
     std::cout << "Phase 1 Score: " << phase1_total_score << std::endl;
     std::cout << "Phase 2 Score: " << phase2_total_score << std::endl;
 
