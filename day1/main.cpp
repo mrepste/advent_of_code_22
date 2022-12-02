@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
     std::size_t running_calorie_sum = 0;
     auto print_max = std::atoi(argv[2]);
     auto elf_itr = elves.crbegin();
+    std::cout << "Elf Total: " << elves.size() << std::endl;
     while (print_index++ < print_max && elf_itr != elves.crend()) {
         running_calorie_sum += elf_itr->get_calories();
         std::cout << (elf_itr++)->display() << " (Running Total: " << running_calorie_sum << ")" << std::endl;
